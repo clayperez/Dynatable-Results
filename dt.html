@@ -1,32 +1,77 @@
-<link rel="stylesheet" href="http://www.clayperez.net/CDN/dynatable/jquery.dynatable.css">
+<link rel="stylesheet" href="//www.clayperez.net/CDN/dynatable/jquery.dynatable.css">
+<link rel="stylesheet" href="//www.clayperez.net/CDN/dynatable/custom.css">
 
-<div id="bracketContainer"></div>
+<div id="queryContainer">
+  <span class="queryList">YEAR: <select id="yearSelector" name="year"></select></span>
+  <span class="queryList">ROUTE: <select id="routeSelector" name="route"></select></span>
+  <span class="queryList">AGE BRACKET: <select id="ageSelector" name="agebracket"></select></span>
+</div>
 <table id="resultsTable">
     <thead>
         <td>bib</td><td>route</td><td>firstname</td><td>lastname</td><td>agebracket</td><td>elapsedtime</td><td>year</td>
     </thead>
     <tbody></tbody>
 </table>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="http://www.clayperez.net/CDN/dynatable/json_query.min.js"></script>
-<script src="http://www.clayperez.net/CDN/dynatable/jquery.dynatable.js"></script>
-<script src="http://www.clayperez.net/CDN/dynatable/lgf_all_results.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="//www.clayperez.net/CDN/dynatable/json_query.min.js"></script>
+<script src="//www.clayperez.net/CDN/dynatable/jquery.dynatable.js"></script>
+<script src="//www.clayperez.net/CDN/dynatable/lgf_all_results.js"></script>
+
 <script>
+
 // JSON QUERY
 // https://github.com/jiren/JsonQuery
 var HTML = '';
+var YEAR = '';
+var AGEBRACKET = '';
 var QData = JsonQuery( theResults );
-var ageBrackets = QData.select('agebracket').groupBy('agebracket').order({'agebracket': 'asc'}).exec();
-for ( var bracket in ageBrackets ){ HTML += '<option>' + bracket + '</option>'; }
-$("#bracketContainer").html( 'AGE BRACKET: <select id="ageBracketSelector" name="agebracket">' + HTML + '</select>' );
+
+$(document).on('change', '#yearSelector', function(){
+  YEAR = $(this).val();
+  populateRoutes();
+  populateAges();
+  drawTableWithCurrentData();
+});
+
+// YEARS
+function populateYears(){
+  $("#yearSelector").html( '<option></option>' );
+  var years = QData.select('year').groupBy('year').order({'year': 'asc'}).exec();
+  for ( var year in years ){ $("#yearSelector").append( '<option>' + year + '</option>' ); }
+}
+
+// ROUTES
+function populateRoutes(){
+  $("#routeSelector").html( '<option></option>' );
+  if(YEAR != '') { var routes = QData.where({'year': YEAR}).select('route').groupBy('route').order({'route': 'asc'}).exec(); }
+  else { var routes = QData.select('route').groupBy('route').order({'route': 'asc'}).exec(); }
+  for ( var route in routes ){ $("#routeSelector").append( '<option>' + route + '</option>' ); }
+}
+
+// AGES
+function populateAges(){
+  $("#ageSelector").html( '<option></option>' );
+  if(YEAR != '') { var ageBrackets = QData.where({'year': YEAR}).select('agebracket').groupBy('agebracket').order({'agebracket': 'asc'}).exec(); }
+  else { var ageBrackets = QData.select('agebracket').groupBy('agebracket').order({'agebracket': 'asc'}).exec(); }
+  for ( var bracket in ageBrackets ){ $("#ageSelector").append( '<option>' + bracket + '</option>' ); }
+}
 
 // DYNATABLE
 // http://www.dynatable.com/
-var dynatable = $('#resultsTable').dynatable({
-  dataset: {records: theResults},
-  inputs: {
-    queries: $('#ageBracketSelector')
-  }
-});
+function drawTableWithCurrentData(){
+  var dynatable = $('#resultsTable').dynatable({
+    dataset: {records: theResults},
+    inputs: {
+      queries: $('#ageSelector, #yearSelector, #routeSelector')
+    }
+  });
+}
+
+//INITIALIZE
+populateYears();
+populateRoutes();
+populateAges();
+drawTableWithCurrentData();
+
 
 </script>
